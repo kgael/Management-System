@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { diasEntre, hoyISO, uid } from "./utils/helpers";
 import { loadItems, loadMoves, saveItems, saveMoves } from "./utils/storage";
 
