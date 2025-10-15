@@ -1,3 +1,3 @@
 ## Proyecto Final Sistema-Gestión
 
-![Logotipo] (public/Logotipo.jpg)
+![Logotipo](public/Logotipo.jpg)
