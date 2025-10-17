@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { diasEntre, hoyISO, uid } from "./utils/helpers";
+// src/App.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import { descargarJSON, diasEntre, hoyISO, uid } from "./utils/helpers";
 import { loadItems, loadMoves, saveItems, saveMoves } from "./utils/storage";
 
 import StatsBox from "./components/StatsBox";
-import Inventory from "./Pages/Inventory";
-import Movements from "./Pages/Movements";
-import Alerts from "./Pages/Alerts";
-import NewItemForm from "./Pages/NewItemForm";
-import MovementForm from "./Pages/MovementForm";
+import Inventory from "./pages/Inventory";
+import Movements from "./pages/Movements";
+import Alerts from "./pages/Alerts";
+import NewItemForm from "./pages/NewItemForm";
+import MovementForm from "./pages/MovementForm";
 import "./App.css"
 
 export default function App() {
@@ -20,6 +21,21 @@ export default function App() {
   // ----- Persistencia local -----
   useEffect(() => saveItems(items), [items]);
   useEffect(() => saveMoves(moves), [moves]);
+
+  // Migración: completar itemNombre en movimientos antiguos (una sola vez)
+  useEffect(() => {
+    const fixed = moves.map((m) => {
+      if (!m.itemNombre) {
+        const it = items.find((i) => i.id === m.itemId);
+        return { ...m, itemNombre: it?.nombre || "(desconocido)" };
+      }
+      return m;
+    });
+    if (JSON.stringify(fixed) !== JSON.stringify(moves)) {
+      setMoves(fixed);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const hoy = hoyISO();
 
@@ -52,19 +68,32 @@ export default function App() {
       responsableUltimo: data.responsable || "—",
     };
     setItems([nuevo, ...items]);
-    registrarMovimiento(
-      nuevo.id,
-      "entrada",
-      nuevo.cantidad,
-      nuevo.responsableUltimo,
-      "Alta inicial"
-    );
+    registrarMovimiento({
+      itemId: nuevo.id,
+      itemNombre: nuevo.nombre,
+      tipo: "entrada",
+      cantidad: nuevo.cantidad,
+      responsable: nuevo.responsableUltimo,
+      nota: "Alta inicial",
+    });
   }
 
-  function registrarMovimiento(itemId, tipo, cantidad, responsable, nota) {
+  // 👇 Firma nueva: recibe un objeto y siempre guarda itemNombre
+  function registrarMovimiento({
+    itemId,
+    itemNombre,
+    tipo,
+    cantidad,
+    responsable,
+    nota,
+  }) {
+    const it = items.find((x) => x.id === itemId);
+    const nombre = itemNombre || it?.nombre || "(desconocido)";
+
     const mov = {
       id: uid(),
       itemId,
+      itemNombre: nombre,
       tipo,
       cantidad: Number(cantidad || 0),
       responsable: responsable || "—",
@@ -72,31 +101,33 @@ export default function App() {
       nota: nota || "",
     };
     setMoves([mov, ...moves]);
-    setItems(
-      items.map((it) => {
-        if (it.id !== itemId) return it;
-        let next = { ...it, responsableUltimo: mov.responsable };
-        if (tipo === "entrada") next.cantidad = it.cantidad + mov.cantidad;
-        if (tipo === "salida")
-          next.cantidad = Math.max(0, it.cantidad - mov.cantidad);
-        if (tipo === "descarte")
-          next = { ...next, cantidad: 0, descartado: true };
-        return next;
-      })
-    );
+
+    if (it) {
+      setItems(
+        items.map((x) => {
+          if (x.id !== itemId) return x;
+          let next = { ...x, responsableUltimo: mov.responsable };
+          if (tipo === "entrada") next.cantidad = x.cantidad + mov.cantidad;
+          if (tipo === "salida")
+            next.cantidad = Math.max(0, x.cantidad - mov.cantidad);
+          if (tipo === "descarte") next = { ...next, cantidad: 0, descartado: true };
+          return next;
+        })
+      );
+    }
   }
 
   function onDescarte(item) {
-    if (!confirm("¿Marcar como descartado? Esto pondrá la cantidad en 0."))
-      return;
+    if (!confirm("¿Marcar como descartado? Esto pondrá la cantidad en 0.")) return;
     const responsable = prompt("Responsable del descarte") || "—";
-    registrarMovimiento(
-      item.id,
-      "descarte",
-      item.cantidad,
+    registrarMovimiento({
+      itemId: item.id,
+      itemNombre: item.nombre,
+      tipo: "descarte",
+      cantidad: item.cantidad,
       responsable,
-      "Caducado/Descarte"
-    );
+      nota: "Caducado/Descarte",
+    });
   }
 
   function onSalida(item) {
@@ -104,14 +135,28 @@ export default function App() {
     if (!n || n <= 0) return;
     if (n > item.cantidad) return alert("No hay suficiente stock");
     const resp = prompt("Responsable") || "—";
-    registrarMovimiento(item.id, "salida", n, resp, "Dispensación");
+    registrarMovimiento({
+      itemId: item.id,
+      itemNombre: item.nombre,
+      tipo: "salida",
+      cantidad: n,
+      responsable: resp,
+      nota: "Dispensación",
+    });
   }
 
   function onEntrada(item) {
     const n = Number(prompt("Cantidad a registrar (entrada)", "10") || 0);
     if (!n || n <= 0) return;
     const resp = prompt("Responsable") || "—";
-    registrarMovimiento(item.id, "entrada", n, resp, "Reposición");
+    registrarMovimiento({
+      itemId: item.id,
+      itemNombre: item.nombre,
+      tipo: "entrada",
+      cantidad: n,
+      responsable: resp,
+      nota: "Reposición",
+    });
   }
 
   // ----- UI -----
@@ -122,8 +167,23 @@ export default function App() {
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold">
-              🩺 Inventario — Clínica
+              🩺 Inventario — Clínica 
             </h1>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span
+              className={navigator.onLine ? "text-green-700" : "text-amber-700"}
+            >
+              {navigator.onLine ? "Conectado" : "Sin conexión"}
+            </span>
+            <button
+              onClick={() =>
+                descargarJSON("respaldo_inventario", { items, moves })
+              }
+              className="rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-gray-50"
+            >
+              Descargar respaldo
+            </button>
           </div>
         </header>
 
@@ -189,7 +249,20 @@ export default function App() {
           {tab === "nuevo" && <NewItemForm onSave={crearMedicamento} />}
 
           {tab === "registrar" && (
-            <MovementForm items={items} onSubmit={registrarMovimiento} />
+            <MovementForm
+              items={items}
+              onSubmit={(itemId, tipo, cantidad, responsable, nota) => {
+                const it = items.find((i) => i.id === itemId);
+                registrarMovimiento({
+                  itemId,
+                  itemNombre: it?.nombre,
+                  tipo,
+                  cantidad,
+                  responsable,
+                  nota,
+                });
+              }}
+            />
           )}
         </main>
       </div>
