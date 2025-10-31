@@ -1,0 +1,33 @@
+{
+  "name": "inventario-clinica-backend",
+  "version": "1.0.0",
+  "description": "Backend para Sistema de Gestión de Inventario - Clínica Santa Cruz",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "init:users": "node scripts/initUsers.js",
+    "init:data": "node scripts/initData.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "inventory",
+    "firebase",
+    "express",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-validator": "^7.2.0",
+    "firebase-admin": "^13.0.1",
+    "helmet": "^8.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

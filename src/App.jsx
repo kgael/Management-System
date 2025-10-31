@@ -1,7 +1,11 @@
-// src/App.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { descargarJSON, diasEntre, hoyISO, uid } from "./utils/helpers";
 import { loadItems, loadMoves, saveItems, saveMoves } from "./utils/storage";
+import {
+  getUser,
+  login as authLogin,
+  logout as authLogout,
+} from "./utils/auth";
 
 import StatsBox from "./components/StatsBox";
 import Inventory from "./pages/Inventory";
@@ -9,16 +13,18 @@ import Movements from "./pages/Movements";
 import Alerts from "./pages/Alerts";
 import NewItemForm from "./pages/NewItemForm";
 import MovementForm from "./pages/MovementForm";
-import "./App.css"
+import Login from "./Pages/Login";
+
 
 export default function App() {
   // ----- Estado principal -----
+  const [user, setUser] = useState(getUser());
   const [items, setItems] = useState(loadItems());
   const [moves, setMoves] = useState(loadMoves());
   const [tab, setTab] = useState("inventario");
   const [query, setQuery] = useState("");
 
-  // ----- Persistencia local -----
+  // ----- Persistencia -----
   useEffect(() => saveItems(items), [items]);
   useEffect(() => saveMoves(moves), [moves]);
 
@@ -78,7 +84,7 @@ export default function App() {
     });
   }
 
-  // 👇 Firma nueva: recibe un objeto y siempre guarda itemNombre
+  // Recibe objeto y siempre guarda itemNombre
   function registrarMovimiento({
     itemId,
     itemNombre,
@@ -110,7 +116,8 @@ export default function App() {
           if (tipo === "entrada") next.cantidad = x.cantidad + mov.cantidad;
           if (tipo === "salida")
             next.cantidad = Math.max(0, x.cantidad - mov.cantidad);
-          if (tipo === "descarte") next = { ...next, cantidad: 0, descartado: true };
+          if (tipo === "descarte")
+            next = { ...next, cantidad: 0, descartado: true };
           return next;
         })
       );
@@ -118,7 +125,8 @@ export default function App() {
   }
 
   function onDescarte(item) {
-    if (!confirm("¿Marcar como descartado? Esto pondrá la cantidad en 0.")) return;
+    if (!confirm("¿Marcar como descartado? Esto pondrá la cantidad en 0."))
+      return;
     const responsable = prompt("Responsable del descarte") || "—";
     registrarMovimiento({
       itemId: item.id,
@@ -159,6 +167,19 @@ export default function App() {
     });
   }
 
+  // ----- Login -----
+  if (!user) {
+    return (
+      <Login
+        onSuccess={(usr, pwd, setError) => {
+          const u = authLogin(usr, pwd);
+          if (!u) return setError("Usuario o contraseña incorrectos");
+          setUser(u);
+        }}
+      />
+    );
+  }
+
   // ----- UI -----
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900">
@@ -166,11 +187,14 @@ export default function App() {
         {/* Header */}
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">
-              🩺 Inventario — Clínica 
+            <h1 className="text-2xl font-bold text-blue-700">
+              🩺 Inventario — Clínica
             </h1>
           </div>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-3 text-xs">
+            <span className="hidden sm:inline text-gray-500">
+              {user.name} · {user.role}
+            </span>
             <span
               className={navigator.onLine ? "text-green-700" : "text-amber-700"}
             >
@@ -180,9 +204,18 @@ export default function App() {
               onClick={() =>
                 descargarJSON("respaldo_inventario", { items, moves })
               }
-              className="rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-gray-50"
+              className="rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-amber-50"
             >
               Descargar respaldo
+            </button>
+            <button
+              onClick={() => {
+                authLogout();
+                setUser(null);
+              }}
+              className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white shadow-sm hover:bg-green-700"
+            >
+              Cerrar sesión
             </button>
           </div>
         </header>
@@ -201,8 +234,8 @@ export default function App() {
               onClick={() => setTab(id)}
               className={`rounded-full px-4 py-2 text-sm font-medium border shadow-sm ${
                 tab === id
-                  ? "bg-pink-600 text-white border-pink-600"
-                  : "bg-white hover:bg-gray-50"
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white hover:bg-amber-50"
               }`}
             >
               {label}
