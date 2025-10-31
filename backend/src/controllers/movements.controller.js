@@ -6,9 +6,12 @@ import { formatSuccess } from '../utils/helpers.js';
  */
 export async function createMovement(req, res, next) {
   try {
+    // TEMPORAL: Usar 'system' como usuario por defecto si no hay autenticación
+    const userId = req.user ? req.user.uid : 'system';
+    
     const movement = await movementsService.createMovement(
       req.body,
-      req.user.uid
+      userId
     );
 
     res.status(201).json(

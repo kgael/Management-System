@@ -6,6 +6,7 @@ import { auth } from '../config/firebase.js';
 export async function verifyToken(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
+    console.log('🔐 Auth Header:', authHeader);
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
@@ -15,23 +16,31 @@ export async function verifyToken(req, res, next) {
     }
 
     const token = authHeader.split('Bearer ')[1];
+    console.log('📝 Token recibido:', token.substring(0, 20) + '...');
 
     // Verificar token con Firebase
     const decodedToken = await auth.verifyIdToken(token);
+    console.log('✅ Token decodificado:', {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      claims: decodedToken
+    });
     
     // Agregar información del usuario al request
     req.user = {
       uid: decodedToken.uid,
       email: decodedToken.email,
-      role: decodedToken.role || 'Enfermería', // Custom claim
+      role: decodedToken.role || 'Enfermería',
     };
 
+    console.log('👤 Usuario en request:', req.user);
     next();
   } catch (error) {
-    console.error('Error verificando token:', error);
+    console.error('❌ Error verificando token:', error);
     return res.status(401).json({
       success: false,
       message: 'Token inválido o expirado',
+      error: error.message
     });
   }
 }

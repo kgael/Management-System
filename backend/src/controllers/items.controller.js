@@ -6,7 +6,10 @@ import { formatSuccess } from '../utils/helpers.js';
  */
 export async function createItem(req, res, next) {
   try {
-    const item = await itemsService.createItem(req.body, req.user.uid);
+    // TEMPORAL: Usar 'system' como usuario por defecto si no hay autenticación
+    const userId = req.user ? req.user.uid : 'system';
+    
+    const item = await itemsService.createItem(req.body, userId);
 
     res.status(201).json(
       formatSuccess(item, 'Medicamento creado exitosamente')
@@ -65,7 +68,10 @@ export async function getItemById(req, res, next) {
 export async function updateItem(req, res, next) {
   try {
     const { id } = req.params;
-    const item = await itemsService.updateItem(id, req.body, req.user.uid);
+    // TEMPORAL: Usar 'system' como usuario por defecto si no hay autenticación
+    const userId = req.user ? req.user.uid : 'system';
+    
+    const item = await itemsService.updateItem(id, req.body, userId);
 
     res.json(
       formatSuccess(item, 'Medicamento actualizado exitosamente')

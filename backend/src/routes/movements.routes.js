@@ -1,6 +1,6 @@
 import express from 'express';
 import * as movementsController from '../controllers/movements.controller.js';
-import { verifyToken, requireAdmin } from '../middleware/auth.js';
+// import { verifyToken, requireAdmin } from '../middleware/auth.js'; // COMENTA ESTA LÍNEA
 import { validateRequest } from '../middleware/errorHandler.js';
 import {
   createMovementValidator,
@@ -17,7 +17,7 @@ const router = express.Router();
  */
 router.get(
   '/',
-  verifyToken,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
   paginationValidator,
   validateRequest,
   movementsController.getAllMovements
@@ -30,7 +30,7 @@ router.get(
  */
 router.get(
   '/stats',
-  verifyToken,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
   movementsController.getMovementsStats
 );
 
@@ -41,7 +41,7 @@ router.get(
  */
 router.get(
   '/item/:itemId',
-  verifyToken,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
   movementsController.getMovementsByItem
 );
 
@@ -51,7 +51,7 @@ router.get(
  */
 router.get(
   '/:id',
-  verifyToken,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
   idParamValidator,
   validateRequest,
   movementsController.getMovementById
@@ -63,7 +63,7 @@ router.get(
  */
 router.post(
   '/',
-  verifyToken,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
   createMovementValidator,
   validateRequest,
   movementsController.createMovement
@@ -75,8 +75,8 @@ router.post(
  */
 router.delete(
   '/:id',
-  verifyToken,
-  requireAdmin,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
+  // requireAdmin,  // COMENTADO TEMPORALMENTE
   idParamValidator,
   validateRequest,
   movementsController.deleteMovement

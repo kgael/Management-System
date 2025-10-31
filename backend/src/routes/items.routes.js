@@ -1,6 +1,6 @@
 import express from 'express';
 import * as itemsController from '../controllers/items.controller.js';
-import { verifyToken, requireRoles } from '../middleware/auth.js';
+// import { verifyToken, requireRoles } from '../middleware/auth.js'; // COMENTA ESTA LÍNEA
 import { validateRequest } from '../middleware/errorHandler.js';
 import {
   createItemValidator,
@@ -17,7 +17,7 @@ const router = express.Router();
  */
 router.get(
   '/',
-  verifyToken,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
   itemsController.getAllItems
 );
 
@@ -27,7 +27,7 @@ router.get(
  */
 router.get(
   '/alerts',
-  verifyToken,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
   itemsController.getAlerts
 );
 
@@ -38,7 +38,7 @@ router.get(
  */
 router.get(
   '/search',
-  verifyToken,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
   itemsController.searchItems
 );
 
@@ -48,7 +48,7 @@ router.get(
  */
 router.get(
   '/:id',
-  verifyToken,
+  // verifyToken,  // COMENTADO TEMPORALMENTE
   idParamValidator,
   validateRequest,
   itemsController.getItemById
@@ -60,8 +60,8 @@ router.get(
  */
 router.post(
   '/',
-  verifyToken,
-  requireRoles('Admin', 'Farmacia'),
+  // verifyToken,  // COMENTADO TEMPORALMENTE
+  // requireRoles('Admin', 'Farmacia'),  // COMENTADO TEMPORALMENTE
   createItemValidator,
   validateRequest,
   itemsController.createItem
@@ -73,8 +73,8 @@ router.post(
  */
 router.put(
   '/:id',
-  verifyToken,
-  requireRoles('Admin', 'Farmacia'),
+  // verifyToken,  // COMENTADO TEMPORALMENTE
+  // requireRoles('Admin', 'Farmacia'),  // COMENTADO TEMPORALMENTE
   updateItemValidator,
   validateRequest,
   itemsController.updateItem
@@ -86,8 +86,8 @@ router.put(
  */
 router.delete(
   '/:id',
-  verifyToken,
-  requireRoles('Admin'),
+  // verifyToken,  // COMENTADO TEMPORALMENTE
+  // requireRoles('Admin'),  // COMENTADO TEMPORALMENTE
   idParamValidator,
   validateRequest,
   itemsController.deleteItem

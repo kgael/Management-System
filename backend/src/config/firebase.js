@@ -1,7 +1,17 @@
 import admin from 'firebase-admin';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// 🔥 CORRECCIÓN: Cargar .env desde la raíz del proyecto
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, '../..', '.env');
+dotenv.config({ path: envPath });
+
+console.log('🔧 Configurando Firebase Admin...');
+console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
+console.log('Client Email:', process.env.FIREBASE_CLIENT_EMAIL);
 
 // Configuración del Admin SDK
 const serviceAccount = {
@@ -10,11 +20,23 @@ const serviceAccount = {
   clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
 };
 
+// Verificar que todas las variables estén presentes
+if (!serviceAccount.projectId || !serviceAccount.privateKey || !serviceAccount.clientEmail) {
+  console.error('❌ Faltan variables de entorno de Firebase');
+  throw new Error('Configuración de Firebase incompleta');
+}
+
 // Inicializar Firebase Admin
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    console.log('✅ Firebase Admin inicializado correctamente');
+  } catch (error) {
+    console.error('❌ Error inicializando Firebase Admin:', error);
+    throw error;
+  }
 }
 
 // Exportar servicios
@@ -23,5 +45,7 @@ export const auth = admin.auth();
 
 // Configuración de Firestore
 db.settings({ ignoreUndefinedProperties: true });
+
+console.log('✅ Servicios de Firebase exportados');
 
 export default admin;
