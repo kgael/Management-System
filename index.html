@@ -1,14 +1,139 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <title>proyecto-fl</title>
+    
+    <!-- Meta tags para PWA -->
+    <meta name="theme-color" content="#2563EB" />
+    <meta name="description" content="Sistema de inventario de medicamentos para Clínica Santa Cruz" />
+    
+    <!-- Apple specific meta tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Inventario Clínica" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-512x512png" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <title>Inventario - Clínica Santa Cruz</title>
+    
+    <style>
+      /* Loading screen para PWA */
+      .pwa-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+      .pwa-loading h1 {
+        margin-bottom: 20px;
+        font-size: 24px;
+      }
+      .pwa-loading .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255,255,255,0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
+    <!-- Loading screen inicial -->
+    <div id="pwa-loading" class="pwa-loading">
+      <h1>🩺 Clínica Santa Cruz</h1>
+      <div class="spinner"></div>
+      <p style="margin-top: 20px;">Cargando aplicación...</p>
+    </div>
+
     <div id="root"></div>
+    
+    <script>
+      // Registrar Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('✅ Service Worker registrado con éxito:', registration.scope);
+              
+              // Ocultar loading screen cuando la app esté lista
+              setTimeout(() => {
+                const loading = document.getElementById('pwa-loading');
+                if (loading) {
+                  loading.style.display = 'none';
+                }
+              }, 1000);
+            })
+            .catch(function(error) {
+              console.log('❌ Error registrando Service Worker:', error);
+              
+              // Ocultar loading screen incluso si falla el SW
+              setTimeout(() => {
+                const loading = document.getElementById('pwa-loading');
+                if (loading) {
+                  loading.style.display = 'none';
+                }
+              }, 1000);
+            });
+        });
+      } else {
+        // Ocultar loading screen si no hay soporte para SW
+        setTimeout(() => {
+          const loading = document.getElementById('pwa-loading');
+          if (loading) {
+            loading.style.display = 'none';
+          }
+        }, 1000);
+      }
+
+      // Detectar si la app se está ejecutando en modo standalone (PWA)
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('📱 Ejecutando en modo PWA');
+        document.body.classList.add('pwa-mode');
+      }
+
+      // Manejar el evento de antes de instalar
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('📲 PWA lista para instalar');
+        
+        // Puedes mostrar un botón de instalación aquí
+        showInstallPromotion();
+      });
+
+      function showInstallPromotion() {
+        // Aquí puedes agregar un botón para instalar la PWA
+        console.log('Mostrar promoción de instalación');
+      }
+
+      // Manejar el evento de instalación
+      window.addEventListener('appinstalled', (evt) => {
+        console.log('🎉 PWA instalada exitosamente');
+        deferredPrompt = null;
+      });
+    </script>
+    
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

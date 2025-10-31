@@ -26,9 +26,14 @@ const app = express();
 app.use(helmet());
 
 // CORS - Permitir frontend
+// En backend/src/app.js, actualiza CORS:
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [
+      "http://localhost:5173", // Desarrollo
+      "http://localhost:3000", // Producción con serve
+      "http://localhost:8080", // Otros puertos comunes
+    ],
     credentials: true,
   })
 );
