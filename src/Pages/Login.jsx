@@ -44,7 +44,7 @@ export default function Login({ onSuccess }) {
             />
           </div>
 
-          {error && <div className="text-xs text-rose-600">{error}</div>}
+          {error && <div className="text-xs text-rose-500">{error}</div>}
 
           <button
             type="submit"
