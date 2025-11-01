@@ -2,7 +2,7 @@ export default function Table({ headers, rows, empty }) {
   return (
     <div className="overflow-auto rounded-xl border bg-white">
       <table className="min-w-full text-sm">
-        <thead className="bg-gray-50 text-gray-600">
+        <thead className="bg-gray-50 text-gray-500">
           <tr>
             {headers.map((h) => (
               <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>
