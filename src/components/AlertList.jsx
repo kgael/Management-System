@@ -2,7 +2,7 @@ import Button from "./Button";
 import Estado from "./Estado";
 
 export default function AlertList({ datos, onDescartar, hoy, diasEntre }) {
-  if (!datos.length) return <div className="text-sm text-gray-400">Sin elementos</div>;
+  if (!datos.length) return <div className="text-sm text-gray-500">Sin elementos</div>;
   return (
     <ul className="space-y-3">
       {datos.map((x) => (
