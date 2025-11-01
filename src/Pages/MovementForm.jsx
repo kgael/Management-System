@@ -20,7 +20,7 @@ export default function MovementForm({ items, onSubmit }) {
   return (
     <form onSubmit={submit} className="grid gap-3 rounded-2xl border bg-white p-4 shadow-sm md:grid-cols-2">
       <div>
-        <label className="text-xs text-gray-500">Medicamento</label>
+        <label className="text-xs text-gray-600">Medicamento</label>
         <select value={f.itemId} onChange={(e) => setF({ ...f, itemId: e.target.value })} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm shadow-sm">
           {items.map((i) => (
             <option key={i.id} value={i.id}>{i.nombre} (Stock {i.cantidad})</option>
