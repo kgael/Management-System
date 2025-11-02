@@ -6,7 +6,7 @@ export default function Caducidad({ fecha, descartado, hoy, diasEntre }) {
   if (exp)
     return (
       <div className="flex items-center gap-2">
-        <Pill className="bg-rose-100 text-rose-700">Vencido</Pill>
+        <Pill className="bg-rose-100 text-rose-600">Vencido</Pill>
         <span className="text-xs text-gray-500">{fecha}</span>
       </div>
     );
