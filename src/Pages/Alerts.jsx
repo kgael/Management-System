@@ -3,7 +3,7 @@ import AlertList from "../components/AlertList";
 
 export default function Alerts({ vencidos, proximos, bajos, onDescartar, hoy, diasEntre }) {
   return (
-    <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <section className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
       <Card title={`Vencidos (${vencidos.length})`} subtitle="Revisar y descartar">
         <AlertList datos={vencidos} onDescartar={onDescartar} hoy={hoy} diasEntre={diasEntre} />
       </Card>

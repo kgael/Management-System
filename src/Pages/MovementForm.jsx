@@ -18,7 +18,7 @@ export default function MovementForm({ items, onSubmit }) {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3 rounded-2xl border bg-white p-4 shadow-sm md:grid-cols-2">
+    <form onSubmit={submit} className="grid gap-3 rounded-2xl border bg-white p-3 sm:p-4 shadow-sm grid-cols-1 md:grid-cols-2">
       <div>
         <label className="text-xs text-gray-500">Medicamento</label>
         <select value={f.itemId} onChange={(e) => setF({ ...f, itemId: e.target.value })} className="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm shadow-sm">
@@ -41,7 +41,7 @@ export default function MovementForm({ items, onSubmit }) {
         <Field label="Nota" value={f.nota} onChange={(v) => setF({ ...f, nota: v })} />
       </div>
       <div className="md:col-span-2">
-        <button className="rounded-xl bg-pink-600 px-4 py-2 text-white shadow-sm hover:bg-pink-700" type="submit">Registrar</button>
+        <button className="rounded-xl bg-pink-600 px-4 py-2 text-white shadow-sm hover:bg-pink-700 w-full sm:w-auto text-sm sm:text-base" type="submit">Registrar</button>
       </div>
     </form>
   );
