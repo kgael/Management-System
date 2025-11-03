@@ -9,7 +9,7 @@ export default function AlertList({ datos, onDescartar, hoy, diasEntre }) {
         <li key={x.id} className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3 rounded-xl border p-3">
           <div className="flex-1 min-w-0">
             <div className="font-medium text-sm sm:text-base break-words">{x.nombre}</div>
-            <div className="text-xs text-gray-500 mt-1 space-y-1">
+            <div className="text-xs text-gray-600 mt-1 space-y-1">
               <div>Lote {x.lote}</div>
               <div>Caduca {x.caducidad}</div>
               <div>Stock {x.cantidad}</div>
