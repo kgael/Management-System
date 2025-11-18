@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { descargarJSON, diasEntre, hoyISO } from "./utils/helpers";
+import { diasEntre, hoyISO } from "./utils/helpers";
 import {
   getUser,
   login as authLogin,
   logout as authLogout,
 } from "./utils/auth";
+import { useI18n } from "./hooks/useI18n";
 
 // Importar las funciones de la API
 import { 
@@ -15,6 +16,9 @@ import {
   getAlerts 
 } from "./utils/dataProvider";
 
+// Importar el generador de PDF
+import { generateInventoryPDF, generateAlertsPDF } from "./utils/pdfGenerator";
+
 import StatsBox from "./components/StatsBox";
 import Inventory from "./Pages/Inventory";
 import Movements from "./Pages/Movements";
@@ -22,9 +26,11 @@ import Alerts from "./Pages/Alerts";
 import NewItemForm from "./Pages/NewItemForm";
 import MovementForm from "./Pages/MovementForm";
 import Login from "./Pages/Login";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 
 export default function App() {
   // ----- Estado principal -----
+  const { t, locale } = useI18n();
   const [user, setUser] = useState(getUser());
   const [items, setItems] = useState([]);
   const [moves, setMoves] = useState([]);
@@ -33,6 +39,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showDownloadOptions, setShowDownloadOptions] = useState(false);
 
   // ----- Cargar datos del backend -----
   useEffect(() => {
@@ -62,7 +69,26 @@ export default function App() {
       setMoves(movesData);
     } catch (error) {
       console.error('❌ Error cargando datos:', error);
-      setConnectionError(`Error de conexión: ${error.message}. Verifica que el backend esté corriendo en http://localhost:5000`);
+      
+      // Mensaje más específico según el tipo de error
+      let errorMessage = `Error de conexión: ${error.message}`;
+      
+      if (error.message.includes('401') || error.message.includes('Token')) {
+        errorMessage = `Error de autenticación: ${error.message}. El backend está esperando un token. Verifica que las rutas estén desprotegidas.`;
+      } else if (error.message.includes('Network') || error.message.includes('Failed to fetch')) {
+        errorMessage = `Error de red: No se puede conectar al backend en http://localhost:5000. Asegúrate de que el servidor esté corriendo.`;
+      }
+      
+      setConnectionError(errorMessage);
+      
+      // Cargar datos de ejemplo como fallback
+      console.log("🔄 Cargando datos de ejemplo...");
+      const sampleItems = [
+        { id: '1', nombre: "Paracetamol 500mg", lote: "PCM-24-091", caducidad: "2024-12-31", unidad: "tab", cantidad: 120, minimo: 50, descartado: false },
+        { id: '2', nombre: "Amoxicilina 500mg", lote: "AMX-24-201", caducidad: "2024-10-15", unidad: "cap", cantidad: 30, minimo: 20, descartado: false },
+      ];
+      setItems(sampleItems);
+      setMoves([]);
     } finally {
       setLoading(false);
     }
@@ -96,6 +122,27 @@ export default function App() {
     const bajos = items.filter((x) => !x.descartado && x.cantidad <= x.minimo);
     return { vencidos, proximos, bajos };
   }, [items, hoy]);
+
+  // ----- Funciones de descarga -----
+  const descargarPDFCompleto = () => {
+    try {
+      console.log("📊 Generando PDF completo...");
+      generateInventoryPDF(items, moves, 'Clínica Santa Cruz');
+    } catch (error) {
+      console.error('❌ Error generando PDF completo:', error);
+      alert('Error al generar el PDF completo: ' + error.message);
+    }
+  };
+
+  const descargarPDFAlertas = () => {
+    try {
+      console.log("⚠️ Generando PDF de alertas...");
+      generateAlertsPDF(vencidos, proximos, bajos, 'Clínica Santa Cruz');
+    } catch (error) {
+      console.error('❌ Error generando PDF de alertas:', error);
+      alert('Error al generar el PDF de alertas: ' + error.message);
+    }
+  };
 
   // ----- Acciones con el backend -----
   async function crearMedicamento(data) {
@@ -210,18 +257,19 @@ export default function App() {
     );
   }
 
-  // ----- UI -----
+  // ----- Loading -----
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg mb-2">🔄 Cargando datos del servidor...</div>
-          <div className="text-sm text-gray-500">Conectando con Inventario</div>
+          <div className="text-lg mb-2">🔄 {t('loading')}</div>
+          <div className="text-sm text-gray-500">{t('connecting')}</div>
         </div>
       </div>
     );
   }
 
+  // ----- UI -----
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 flex">
       {/* Sidebar para móviles y tabletas */}
@@ -232,7 +280,9 @@ export default function App() {
         <div className="flex flex-col h-full p-4 border-r">
           {/* Header del sidebar */}
           <div className="flex items-center justify-between mb-6 lg:mb-8">
-            <h2 className="text-lg font-semibold text-blue-700">Navegación</h2>
+            <h2 className="text-lg font-semibold text-blue-700">
+              {t('navigation')}
+            </h2>
             <button 
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
@@ -244,11 +294,11 @@ export default function App() {
           {/* Navegación */}
           <nav className="flex-1 space-y-2">
             {[
-              ["inventario", "📋", "Inventario"],
-              ["movs", "🔄", "Movimientos"],
-              ["alertas", "⚠️", "Alertas"],
-              ["nuevo", "➕", "Nuevo Medicamento"],
-              ["registrar", "📝", "Registrar Movimiento"],
+              ["inventario", "📋", t('inventory')],
+              ["movs", "🔄", t('movements')],
+              ["alertas", "⚠️", t('alerts')],
+              ["nuevo", "➕", t('newMedicine')],
+              ["registrar", "📝", t('registerMovement')],
             ].map(([id, icon, label]) => (
               <button
                 key={id}
@@ -267,13 +317,11 @@ export default function App() {
 
           {/* Footer del sidebar */}
           <div className="pt-4 border-t border-gray-200">
-           
-            
             <div className="p-3 bg-gray-50 rounded-lg">
               <div className="text-sm font-medium text-gray-700">{user.name}</div>
               <div className="text-xs text-gray-500 capitalize">{user.role}</div>
               <div className={`text-xs mt-1 ${navigator.onLine ? "text-green-600" : "text-amber-600"}`}>
-                {navigator.onLine ? "✅ Conectado" : "⚠️ Sin conexión"}
+                {navigator.onLine ? `✅ ${t('online')}` : `⚠️ ${t('offline')}`}
               </div>
             </div>
           </div>
@@ -307,19 +355,52 @@ export default function App() {
                 
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-blue-700">
-                    🩺 Inventario — Clínica Santa Cruz
+                    🩺 {t('appTitle')}
                   </h1>
                 </div>
               </div>
 
               {/* Botones de header para desktop */}
-              <div className="hidden lg:flex items-center gap-3">
-                <button
-                  onClick={() => descargarJSON("respaldo_inventario", { items, moves })}
-                  className="rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-amber-50"
-                >
-                  📥 Descargar respaldo
-                </button>
+              <div className="flex items-center gap-3">
+                <LanguageSwitcher />
+                
+                {/* Menú desplegable para descargas */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowDownloadOptions(!showDownloadOptions)}
+                    className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm shadow-sm hover:bg-amber-50"
+                  >
+                    📥 {t('downloadBackup')} ▼
+                  </button>
+                  
+                  {showDownloadOptions && (
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border rounded-lg shadow-lg z-50">
+                      <button
+                        onClick={() => {
+                          descargarPDFCompleto();
+                          setShowDownloadOptions(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm flex items-center gap-2"
+                      >
+                        📋 {t('fullReport')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          descargarPDFAlertas();
+                          setShowDownloadOptions(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm flex items-center gap-2"
+                        disabled={vencidos.length === 0 && proximos.length === 0 && bajos.length === 0}
+                      >
+                        ⚠️ {t('downloadAlerts')}
+                        {(vencidos.length === 0 && proximos.length === 0 && bajos.length === 0) && (
+                          <span className="text-xs text-gray-400 ml-auto">No hay alertas</span>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   onClick={() => {
                     authLogout();
@@ -327,20 +408,9 @@ export default function App() {
                   }}
                   className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white shadow-sm hover:bg-green-700"
                 >
-                  🚪 Cerrar sesión
+                  🚪 {t('logout')}
                 </button>
               </div>
-
-              {/* Botón cerrar sesión para móviles */}
-              <button
-                onClick={() => {
-                  authLogout();
-                  setUser(null);
-                }}
-                className="lg:hidden rounded-lg bg-green-600 px-3 py-2 text-xs text-white shadow-sm hover:bg-green-700"
-              >
-                🚪 Salir
-              </button>
             </div>
           </div>
         </header>
@@ -353,13 +423,13 @@ export default function App() {
               <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-4">
                 <div className="flex items-center">
                   <div className="text-red-700">
-                    <strong>⚠️ Error de conexión:</strong> {connectionError}
+                    <strong>⚠️ {t('connectionError')}:</strong> {connectionError}
                     <div className="mt-2">
                       <button 
                         onClick={loadData}
                         className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
                       >
-                        Reintentar
+                        {t('retry')}
                       </button>
                     </div>
                   </div>
@@ -369,10 +439,11 @@ export default function App() {
 
             {/* Estadísticas */}
             <section className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-              <StatsBox label="Ítems" value={items.length} />
-              <StatsBox label="Vencidos" value={vencidos.length} />
-              <StatsBox label="≤60 días" value={proximos.length} />
-              <StatsBox label="Bajo stock" value={bajos.length} />
+              {/* CAMBIO AQUÍ: 'items' por 'medicines' */}
+              <StatsBox label={t('medicines')} value={items.length} />
+              <StatsBox label={t('expired')} value={vencidos.length} />
+              <StatsBox label={t('expiringSoon')} value={proximos.length} />
+              <StatsBox label={t('lowStock')} value={bajos.length} />
             </section>
 
             {/* Contenido principal */}

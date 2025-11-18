@@ -1,6 +1,6 @@
 import express from 'express';
 import * as itemsController from '../controllers/items.controller.js';
-// import { verifyToken, requireRoles } from '../middleware/auth.js'; // COMENTA ESTA LÍNEA
+// NOTA: Todas las líneas de verifyToken y requireRoles están comentadas
 import { validateRequest } from '../middleware/errorHandler.js';
 import {
   createItemValidator,
@@ -15,32 +15,20 @@ const router = express.Router();
  * Obtener todos los medicamentos
  * Query params: ?descartado=true/false&search=termino
  */
-router.get(
-  '/',
-  // verifyToken,  // COMENTADO TEMPORALMENTE
-  itemsController.getAllItems
-);
+router.get('/', itemsController.getAllItems);
 
 /**
  * GET /api/items/alerts
  * Obtener alertas (vencidos, próximos a vencer, bajo stock)
  */
-router.get(
-  '/alerts',
-  // verifyToken,  // COMENTADO TEMPORALMENTE
-  itemsController.getAlerts
-);
+router.get('/alerts', itemsController.getAlerts);
 
 /**
  * GET /api/items/search
  * Buscar medicamentos
  * Query params: ?q=termino
  */
-router.get(
-  '/search',
-  // verifyToken,  // COMENTADO TEMPORALMENTE
-  itemsController.searchItems
-);
+router.get('/search', itemsController.searchItems);
 
 /**
  * GET /api/items/:id
@@ -48,7 +36,6 @@ router.get(
  */
 router.get(
   '/:id',
-  // verifyToken,  // COMENTADO TEMPORALMENTE
   idParamValidator,
   validateRequest,
   itemsController.getItemById
@@ -60,8 +47,6 @@ router.get(
  */
 router.post(
   '/',
-  // verifyToken,  // COMENTADO TEMPORALMENTE
-  // requireRoles('Admin', 'Farmacia'),  // COMENTADO TEMPORALMENTE
   createItemValidator,
   validateRequest,
   itemsController.createItem
@@ -73,8 +58,6 @@ router.post(
  */
 router.put(
   '/:id',
-  // verifyToken,  // COMENTADO TEMPORALMENTE
-  // requireRoles('Admin', 'Farmacia'),  // COMENTADO TEMPORALMENTE
   updateItemValidator,
   validateRequest,
   itemsController.updateItem
@@ -86,8 +69,6 @@ router.put(
  */
 router.delete(
   '/:id',
-  // verifyToken,  // COMENTADO TEMPORALMENTE
-  // requireRoles('Admin'),  // COMENTADO TEMPORALMENTE
   idParamValidator,
   validateRequest,
   itemsController.deleteItem

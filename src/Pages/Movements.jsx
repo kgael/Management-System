@@ -1,28 +1,41 @@
 import Table from "../components/Table";
 import Pill from "../components/Pill";
+import { useI18n } from "../hooks/useI18n";
 
 function EtiquetaTipo({ tipo }) {
+  const { t } = useI18n();
   const map = {
     entrada: "bg-green-100 text-green-700",
     salida: "bg-blue-100 text-blue-700",
     descarte: "bg-rose-100 text-rose-700",
   };
+  
+  const tipoTraducido = {
+    entrada: t('input'),
+    salida: t('output'),
+    descarte: t('discard')
+  };
+  
   return (
-    <Pill className={map[tipo] || "bg-gray-100 text-gray-700"}>{tipo}</Pill>
+    <Pill className={map[tipo] || "bg-gray-100 text-gray-700"}>
+      {tipoTraducido[tipo] || tipo}
+    </Pill>
   );
 }
 
 export default function Movements({ items, moves }) {
+  const { t } = useI18n();
+  
   return (
     <section>
       <Table
         headers={[
-          "Fecha",
-          "Tipo",
-          "Medicamento",
-          "Cantidad",
-          "Responsable",
-          "Nota",
+          t('today'),
+          t('movementType'),
+          t('medicine'),
+          t('quantity'),
+          t('responsible'),
+          t('note'),
         ]}
         rows={moves.map((m) => [
           m.fecha,
@@ -36,7 +49,7 @@ export default function Movements({ items, moves }) {
           m.responsable,
           m.nota,
         ])}
-        empty="Sin movimientos"
+        empty={t('noMovements')}
       />
     </section>
   );

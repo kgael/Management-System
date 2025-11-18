@@ -1,7 +1,7 @@
 // src/utils/dataProvider.js
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Cliente HTTP simple
+// Cliente HTTP simple SIN autenticación
 async function apiClient(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
@@ -13,6 +13,11 @@ async function apiClient(endpoint, options = {}) {
     ...options,
   };
 
+  // REMOVER cualquier header de autorización
+  if (config.headers.Authorization) {
+    delete config.headers.Authorization;
+  }
+
   if (config.body) {
     config.body = JSON.stringify(config.body);
   }
@@ -21,8 +26,8 @@ async function apiClient(endpoint, options = {}) {
     const response = await fetch(url, config);
     
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error ${response.status}: ${errorText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
     }
     
     const data = await response.json();

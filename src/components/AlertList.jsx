@@ -1,8 +1,12 @@
 import Button from "./Button";
 import Estado from "./Estado";
+import { useI18n } from "../hooks/useI18n";
 
 export default function AlertList({ datos, onDescartar, hoy, diasEntre }) {
-  if (!datos.length) return <div className="text-sm text-gray-500">Sin elementos</div>;
+  const { t } = useI18n();
+
+  if (!datos.length) return <div className="text-sm text-gray-500">{t('noElements')}</div>;
+
   return (
     <ul className="space-y-2 sm:space-y-3">
       {datos.map((x) => (
@@ -10,14 +14,14 @@ export default function AlertList({ datos, onDescartar, hoy, diasEntre }) {
           <div className="flex-1 min-w-0">
             <div className="font-medium text-sm sm:text-base break-words">{x.nombre}</div>
             <div className="text-xs text-gray-500 mt-1 space-y-1">
-              <div>Lote {x.lote}</div>
-              <div>Caduca {x.caducidad}</div>
-              <div>Stock {x.cantidad}</div>
+              <div>{t('batch')} {x.lote}</div>
+              <div>{t('expires')} {x.caducidad}</div>
+              <div>{t('stock')} {x.cantidad}</div>
             </div>
           </div>
           <div className="self-end sm:self-auto mt-2 sm:mt-0">
             {onDescartar ? (
-              <Button danger onClick={() => onDescartar(x)}>Descartar</Button>
+              <Button danger onClick={() => onDescartar(x)}>{t('discard')}</Button>
             ) : (
               <Estado r={x} hoy={hoy} diasEntre={diasEntre} />
             )}
