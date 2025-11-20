@@ -2,7 +2,7 @@ console.log('🔧 VITE_API_URL:', import.meta.env.VITE_API_URL);
 console.log('🔧 MODE:', import.meta.env.MODE);
 console.log('🔧 Todas las variables:', import.meta.env);
 
-// src/App.jsx - VERSIÓN CORREGIDA SIN DUPLICACIÓN
+// src/App.jsx - VERSIÓN CORREGIDA
 import React, { useEffect, useMemo, useState } from "react";
 import { diasEntre, hoyISO } from "./utils/helpers";
 import {
@@ -213,6 +213,7 @@ export default function App() {
         timestamp: Date.now()
       });
 
+      // 🔥 CORRECCIÓN: Actualizar tanto moves como items
       setMoves(prev => [mov, ...prev]);
       
       // Recargar items para obtener stock actualizado
@@ -230,16 +231,32 @@ export default function App() {
     }
   }
 
-  // 🔥 CORREGIDO: Función para crear medicamento SIN duplicación
+  // 🔥 CORREGIDO: Función para crear medicamento que también actualiza moves
   async function crearMedicamento(data) {
     try {
       console.log("📝 Creando medicamento:", data);
       const nuevo = await createItem(data);
+      
+      // Actualizar items
       setItems(prev => [nuevo, ...prev]);
       
-      // ❌ ELIMINADO: No crear movimiento de entrada automático
-      // Esto causaba que la cantidad se duplicara
-      // La cantidad ya se establece correctamente al crear el medicamento
+      // 🔥 NUEVO: Crear movimiento de entrada automático
+      if (data.cantidad > 0) {
+        const movimientoEntrada = {
+          itemId: nuevo.id,
+          tipo: "entrada",
+          cantidad: data.cantidad,
+          responsable: user.name || "Sistema",
+          nota: "Entrada inicial por creación de medicamento",
+          fecha: new Date().toISOString().split('T')[0]
+        };
+        
+        console.log("📦 Creando movimiento de entrada automático:", movimientoEntrada);
+        const mov = await createMovement(movimientoEntrada);
+        
+        // Actualizar moves con el nuevo movimiento
+        setMoves(prev => [mov, ...prev]);
+      }
       
       alert("✅ Medicamento creado exitosamente");
     } catch (error) {
@@ -400,11 +417,11 @@ export default function App() {
             {/* Navegación */}
             <nav className="flex-1 space-y-2">
               {[
-                ["inventario", "+", t('inventory')],
-                ["movs", "+", t('movements')],
-                ["alertas", "+", t('alerts')],
-                ["nuevo", "+", t('newMedicine')],
-                ["registrar", "+", t('registerMovement')],
+                ["inventario", "📦", t('inventory')],
+                ["movs", "🔄", t('movements')],
+                ["alertas", "⚠️", t('alerts')],
+                ["nuevo", "➕", t('newMedicine')],
+                ["registrar", "📝", t('registerMovement')],
               ].map(([id, icon, label]) => (
                 <button
                   key={id}
@@ -512,15 +529,15 @@ export default function App() {
                     )}
                   </div>
 
-                <button
-  onClick={() => {
-    authLogout();
-    setUser(null);
-  }}
-  className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white shadow-sm hover:bg-blue-700"
->
-   {t('logout')}
-</button>
+                  <button
+                    onClick={() => {
+                      authLogout();
+                      setUser(null);
+                    }}
+                    className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white shadow-sm hover:bg-blue-700"
+                  >
+                    {t('logout')}
+                  </button>
                 </div>
               </div>
             </div>
