@@ -4,13 +4,18 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 
 // Importar rutas
-import authRoutes from "./routes/auth.routes.js";
-import itemsRoutes from "./routes/items.routes.js";
-import movementsRoutes from "./routes/movements.routes.js";
+import authRoutes from "./src/routes/auth.routes.js";
+import itemsRoutes from "./src/routes/items.routes.js";
+import movementsRoutes from "./src/routes/movements.routes.js";
+import { errorHandler, notFoundHandler } from "./src/middleware/errorHandler.js";
+import { auth } from "./src/config/firebase.js";
 
 // Importar middlewares
-import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
-import { auth } from "./config/firebase.js";
+import {
+  errorHandler,
+  notFoundHandler,
+} from "./src/middleware/errorHandler.js";
+import { auth } from "./src/config/firebase.js";
 
 // Cargar variables de entorno
 dotenv.config();
@@ -33,14 +38,18 @@ app.use(
       const allowedOrigins = [
         "http://localhost:5173",
         "http://localhost:3000",
-        "https://tu-frontend.netlify.app",  // Lo actualizarás después
-        process.env.FRONTEND_URL
+        "https://tu-frontend.netlify.app", // Lo actualizarás después
+        process.env.FRONTEND_URL,
       ].filter(Boolean);
 
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        process.env.NODE_ENV === "development"
+      ) {
         callback(null, true);
       } else {
-        callback(new Error('No permitido por CORS'));
+        callback(new Error("No permitido por CORS"));
       }
     },
     credentials: true,
@@ -48,8 +57,8 @@ app.use(
 );
 
 // Parser de JSON
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Logger simple de requests
 app.use((req, res, next) => {
@@ -68,19 +77,19 @@ app.get("/health", (req, res) => {
     message: "🚀 API funcionando correctamente",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
-    version: "1.0.0"
+    version: "1.0.0",
   });
 });
 
 // Test de Firebase (solo en desarrollo)
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   app.get("/api/test-firebase", async (req, res) => {
     try {
       console.log("🧪 Probando Firebase Admin SDK...");
 
       // Solo probar listar usuarios en producción, no crear/eliminar
       const users = await auth.listUsers(1);
-      
+
       res.json({
         success: true,
         message: "Firebase Admin SDK funciona correctamente",

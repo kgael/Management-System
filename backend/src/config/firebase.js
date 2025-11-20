@@ -1,5 +1,4 @@
 import admin from "firebase-admin";
-import { config } from "firebase-functions";
 
 const creds = config().adminsdk;
 

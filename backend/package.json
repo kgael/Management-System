@@ -13,21 +13,10 @@
     "helmet": "^7.1.0",
     "dotenv": "^16.3.1",
     "firebase-admin": "^11.11.1",
+    "firebase-functions": "^4.9.0",
     "express-validator": "^7.0.1"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.2"
-  },
-  "keywords": [
-    "inventory",
-    "clinical",
-    "firebase",
-    "express",
-    "api"
-  ],
-  "author": "Tu Nombre",
-  "license": "MIT"
+  }
 }
