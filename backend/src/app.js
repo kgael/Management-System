@@ -26,22 +26,18 @@ const app = express();
 app.use(helmet());
 
 // CORS - Configuración para producción
+// En la sección CORS, reemplaza con:
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Permitir requests sin origin (como mobile apps o curl requests)
-      if (!origin) return callback(null, true);
-      
       const allowedOrigins = [
         "http://localhost:5173",
-        "http://localhost:3000", 
-        "http://localhost:8080",
-        "https://tu-frontend.netlify.app", // Reemplaza con tu URL de frontend
-        "https://tu-frontend.vercel.app",   // Reemplaza con tu URL de frontend
-        process.env.FRONTEND_URL            // Variable de entorno para producción
+        "http://localhost:3000",
+        "https://tu-frontend.netlify.app",  // Lo actualizarás después
+        process.env.FRONTEND_URL
       ].filter(Boolean);
 
-      if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
         callback(null, true);
       } else {
         callback(new Error('No permitido por CORS'));
