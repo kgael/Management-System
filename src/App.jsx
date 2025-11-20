@@ -1,3 +1,7 @@
+console.log('🔧 VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('🔧 MODE:', import.meta.env.MODE);
+console.log('🔧 Todas las variables:', import.meta.env);
+
 // src/App.jsx - VERSIÓN CORREGIDA SIN DUPLICACIÓN
 import React, { useEffect, useMemo, useState } from "react";
 import { diasEntre, hoyISO } from "./utils/helpers";
