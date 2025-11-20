@@ -231,39 +231,30 @@ export default function App() {
     }
   }
 
-  // 🔥 CORREGIDO: Función para crear medicamento que también actualiza moves
-  async function crearMedicamento(data) {
-    try {
-      console.log("📝 Creando medicamento:", data);
-      const nuevo = await createItem(data);
-      
-      // Actualizar items
-      setItems(prev => [nuevo, ...prev]);
-      
-      // 🔥 NUEVO: Crear movimiento de entrada automático
-      if (data.cantidad > 0) {
-        const movimientoEntrada = {
-          itemId: nuevo.id,
-          tipo: "entrada",
-          cantidad: data.cantidad,
-          responsable: user.name || "Sistema",
-          nota: "Entrada inicial por creación de medicamento",
-          fecha: new Date().toISOString().split('T')[0]
-        };
-        
-        console.log("📦 Creando movimiento de entrada automático:", movimientoEntrada);
-        const mov = await createMovement(movimientoEntrada);
-        
-        // Actualizar moves con el nuevo movimiento
-        setMoves(prev => [mov, ...prev]);
-      }
-      
-      alert("✅ Medicamento creado exitosamente");
-    } catch (error) {
-      console.error('❌ Error creando medicamento:', error);
-      alert('❌ Error al crear el medicamento: ' + error.message);
+ // 🔥 CORREGIDO: Función para crear medicamento CON movimiento inicial
+async function crearMedicamento(data) {
+  try {
+    console.log("📝 Creando medicamento:", data);
+    const nuevo = await createItem(data);
+    setItems(prev => [nuevo, ...prev]);
+    
+    // ✅ AGREGAR: Crear movimiento de entrada inicial
+    if (nuevo.cantidad > 0) {
+      await crearMovimiento({
+        itemId: nuevo.id,
+        tipo: "entrada",
+        cantidad: nuevo.cantidad,
+        responsable: user.name || "Sistema",
+        nota: "Entrada inicial - Creación de medicamento",
+      });
     }
+    
+    alert("✅ Medicamento creado exitosamente");
+  } catch (error) {
+    console.error('❌ Error creando medicamento:', error);
+    alert('❌ Error al crear el medicamento: ' + error.message);
   }
+}
 
   // Funciones mejoradas con protección
   async function onDescarte(item) {
@@ -417,11 +408,11 @@ export default function App() {
             {/* Navegación */}
             <nav className="flex-1 space-y-2">
               {[
-                ["inventario", "📦", t('inventory')],
-                ["movs", "🔄", t('movements')],
-                ["alertas", "⚠️", t('alerts')],
-                ["nuevo", "➕", t('newMedicine')],
-                ["registrar", "📝", t('registerMovement')],
+                ["inventario", "+", t('inventory')],
+                ["movs", "+", t('movements')],
+                ["alertas", "+", t('alerts')],
+                ["nuevo", "+", t('newMedicine')],
+                ["registrar", "+", t('registerMovement')],
               ].map(([id, icon, label]) => (
                 <button
                   key={id}
