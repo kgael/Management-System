@@ -25,26 +25,39 @@ const app = express();
 // Seguridad HTTP headers
 app.use(helmet());
 
-// CORS - Permitir frontend
-// En backend/src/app.js, actualiza CORS:
+// CORS - Configuración para producción
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", // Desarrollo
-      "http://localhost:3000", // Producción con serve
-      "http://localhost:8080", // Otros puertos comunes
-    ],
+    origin: function (origin, callback) {
+      // Permitir requests sin origin (como mobile apps o curl requests)
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://localhost:3000", 
+        "http://localhost:8080",
+        "https://tu-frontend.netlify.app", // Reemplaza con tu URL de frontend
+        "https://tu-frontend.vercel.app",   // Reemplaza con tu URL de frontend
+        process.env.FRONTEND_URL            // Variable de entorno para producción
+      ].filter(Boolean);
+
+      if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        callback(new Error('No permitido por CORS'));
+      }
+    },
     credentials: true,
   })
 );
 
 // Parser de JSON
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logger simple de requests (desarrollo)
+// Logger simple de requests
 app.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.path}`);
+  console.log(`📨 ${req.method} ${req.path} - ${new Date().toISOString()}`);
   next();
 });
 
@@ -52,109 +65,45 @@ app.use((req, res, next) => {
 // Rutas
 // ======================
 
-// Health check
+// Health check mejorado
 app.get("/health", (req, res) => {
   res.json({
     success: true,
-    message: "API funcionando correctamente",
+    message: "🚀 API funcionando correctamente",
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
+    environment: process.env.NODE_ENV || "development",
+    version: "1.0.0"
   });
 });
 
-// 🔥 NUEVO: Endpoint para probar Firebase Admin SDK
-app.get("/api/test-firebase", async (req, res) => {
-  try {
-    console.log("🧪 Probando Firebase Admin SDK...");
+// Test de Firebase (solo en desarrollo)
+if (process.env.NODE_ENV !== 'production') {
+  app.get("/api/test-firebase", async (req, res) => {
+    try {
+      console.log("🧪 Probando Firebase Admin SDK...");
 
-    // Probar que Firebase Admin funciona creando y eliminando usuario temporal
-    const testEmail = `test-${Date.now()}@clinica.com`;
-    const testUser = await auth.createUser({
-      email: testEmail,
-      password: "123456",
-      displayName: "Usuario Test",
-    });
-
-    console.log("✅ Usuario test creado:", testUser.uid);
-
-    // Establecer custom claims
-    await auth.setCustomUserClaims(testUser.uid, { role: "Admin" });
-    console.log("✅ Custom claims establecidos");
-
-    // Eliminar usuario test
-    await auth.deleteUser(testUser.uid);
-    console.log("✅ Usuario test eliminado");
-
-    res.json({
-      success: true,
-      message: "Firebase Admin SDK funciona correctamente",
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("❌ Error Firebase Admin:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error con Firebase Admin SDK",
-      error: error.message,
-      code: error.code,
-    });
-  }
-});
-
-// 🔥 NUEVO: Endpoint público para crear usuario de prueba
-app.post("/api/create-test-user", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
+      // Solo probar listar usuarios en producción, no crear/eliminar
+      const users = await auth.listUsers(1);
+      
+      res.json({
+        success: true,
+        message: "Firebase Admin SDK funciona correctamente",
+        usersCount: users.users.length,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("❌ Error Firebase Admin:", error);
+      res.status(500).json({
         success: false,
-        message: "Email y password requeridos",
+        message: "Error con Firebase Admin SDK",
+        error: error.message,
+        code: error.code,
       });
     }
+  });
+}
 
-    console.log("👤 Creando usuario de prueba:", email);
-
-    const user = await auth.createUser({
-      email,
-      password,
-      displayName: "Usuario Prueba",
-    });
-
-    // Establecer rol
-    await auth.setCustomUserClaims(user.uid, { role: "Enfermería" });
-
-    // Guardar en Firestore
-    const { db } = await import("./config/firebase.js");
-    await db.collection("users").doc(user.uid).set({
-      email,
-      name: "Usuario Prueba",
-      role: "Enfermería",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    console.log("✅ Usuario creado:", user.uid);
-
-    res.json({
-      success: true,
-      message: "Usuario de prueba creado exitosamente",
-      user: {
-        uid: user.uid,
-        email: user.email,
-      },
-    });
-  } catch (error) {
-    console.error("❌ Error creando usuario:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error creando usuario",
-      error: error.message,
-    });
-  }
-});
-
-// Agrega esto en tu app.js (antes de las otras rutas)
+// Debug token endpoint
 app.post("/api/debug-token", async (req, res) => {
   try {
     const { token } = req.body;
