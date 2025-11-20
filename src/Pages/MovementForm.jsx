@@ -1,3 +1,4 @@
+// src/Pages/MovementForm.jsx - VERSIÓN COMPLETA
 import { useEffect, useState } from "react";
 import Field from "../components/Field";
 import { useI18n } from "../hooks/useI18n";
@@ -43,7 +44,9 @@ export default function MovementForm({ items, onSubmit }) {
         <Field label={t('note')} value={f.nota} onChange={(v) => setF({ ...f, nota: v })} />
       </div>
       <div className="md:col-span-2">
-        <button className="rounded-xl bg-pink-600 px-4 py-2 text-white shadow-sm hover:bg-pink-700 w-full sm:w-auto text-sm sm:text-base" type="submit">{t('register')}</button>
+        <button className="rounded-xl bg-blue-600 px-4 py-2 text-white shadow-sm hover:bg-blue-700 w-full sm:w-auto text-sm sm:text-base" type="submit">
+          {t('register')}
+        </button>
       </div>
     </form>
   );

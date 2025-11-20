@@ -1,3 +1,4 @@
+// services/items.service.js - VERSIÓN COMPLETA CORREGIDA
 import { db } from '../config/firebase.js';
 import { cleanUndefined, estaVencido, proximoAVencer } from '../utils/helpers.js';
 
@@ -45,13 +46,7 @@ export async function getAllItems(filters = {}) {
       query = query.where('descartado', '==', filters.descartado);
     }
 
-    if (filters.nombre) {
-      // Firestore no soporta búsqueda de texto, se hace en el cliente
-      // Aquí solo ordenamos
-      query = query.orderBy('nombre');
-    }
-
-    const snapshot = await query.get();
+    const snapshot = await query.orderBy('nombre').get();
 
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -83,16 +78,23 @@ export async function getItemById(id) {
 }
 
 /**
- * Actualizar item
+ * Actualizar item - VERSIÓN CORREGIDA
+ * NO permite modificar cantidad directamente
  */
 export async function updateItem(id, data, userId) {
   try {
+    // Campos que NO se pueden modificar directamente
+    const { cantidad, responsableUltimo, ...allowedData } = data;
+    
     const updateData = {
-      ...cleanUndefined(data),
+      ...cleanUndefined(allowedData),
       updatedAt: new Date(),
     };
 
-    await db.collection(COLLECTION).doc(id).update(updateData);
+    // Solo actualizar si hay campos permitidos para modificar
+    if (Object.keys(updateData).length > 1) { // Siempre tiene updatedAt
+      await db.collection(COLLECTION).doc(id).update(updateData);
+    }
 
     return await getItemById(id);
   } catch (error) {
@@ -101,12 +103,17 @@ export async function updateItem(id, data, userId) {
 }
 
 /**
- * Actualizar cantidad de un item
+ * Actualizar cantidad de un item - ÚNICO lugar donde se modifica cantidad
  */
 export async function updateItemQuantity(id, newQuantity, responsable) {
   try {
+    const quantity = Number(newQuantity);
+    if (isNaN(quantity) || quantity < 0) {
+      throw new Error('Cantidad inválida');
+    }
+
     await db.collection(COLLECTION).doc(id).update({
-      cantidad: Number(newQuantity),
+      cantidad: quantity,
       responsableUltimo: responsable || '—',
       updatedAt: new Date(),
     });

@@ -1,3 +1,4 @@
+// src/Pages/NewItemForm.jsx - VERSIÓN COMPLETA
 import { useState } from "react";
 import Field from "../components/Field";
 import { useI18n } from "../hooks/useI18n";
@@ -24,7 +25,9 @@ export default function NewItemForm({ onSave }) {
       <Field label={t('minimumStock')} type="number" value={f.minimo} onChange={(v) => setF({ ...f, minimo: Number(v) })} />
       <Field label={t('responsible')} value={f.responsable} onChange={(v) => setF({ ...f, responsable: v })} />
       <div className="md:col-span-2 flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-        <button className="rounded-xl bg-pink-600 px-4 py-2 text-white shadow-sm hover:bg-pink-700 text-sm sm:text-base w-full sm:w-auto" type="submit">{t('save')}</button>
+        <button className="rounded-xl bg-blue-600 px-4 py-2 text-white shadow-sm hover:bg-blue-700 text-sm sm:text-base w-full sm:w-auto" type="submit">
+          {t('save')}
+        </button>
         <span className="text-xs text-gray-500 mt-1 sm:mt-0">{t('requiredFields')}</span>
       </div>
     </form>

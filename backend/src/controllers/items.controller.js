@@ -1,3 +1,4 @@
+// controllers/items.controller.js - VERSIÓN COMPLETA CORREGIDA
 import * as itemsService from '../services/items.service.js';
 import { formatSuccess } from '../utils/helpers.js';
 
@@ -9,6 +10,15 @@ export async function createItem(req, res, next) {
     // TEMPORAL: Usar 'system' como usuario por defecto si no hay autenticación
     const userId = req.user ? req.user.uid : 'system';
     
+    // Validar que la cantidad sea un número válido
+    const cantidad = Number(req.body.cantidad);
+    if (isNaN(cantidad) || cantidad < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'La cantidad debe ser un número válido y positivo'
+      });
+    }
+
     const item = await itemsService.createItem(req.body, userId);
 
     res.status(201).json(
@@ -63,11 +73,20 @@ export async function getItemById(req, res, next) {
 }
 
 /**
- * Actualizar medicamento
+ * Actualizar medicamento - VERSIÓN CORREGIDA
  */
 export async function updateItem(req, res, next) {
   try {
     const { id } = req.params;
+    
+    // No permitir modificar cantidad directamente a través de update
+    if (req.body.cantidad !== undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se puede modificar la cantidad directamente. Use los movimientos de entrada/salida.'
+      });
+    }
+
     // TEMPORAL: Usar 'system' como usuario por defecto si no hay autenticación
     const userId = req.user ? req.user.uid : 'system';
     

@@ -119,41 +119,60 @@
     <div id="root"></div>
     
     <script>
-      // Registrar Service Worker
+      // Registrar Service Worker MEJORADO
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
+          // Ruta absoluta para el Service Worker
           navigator.serviceWorker.register('/sw.js')
             .then(function(registration) {
               console.log('✅ Service Worker registrado con éxito:', registration.scope);
               
-              // Ocultar loading screen cuando la app esté lista
-              setTimeout(() => {
-                const loading = document.getElementById('pwa-loading');
-                if (loading) {
-                  loading.style.display = 'none';
-                }
-              }, 1000);
+              // Verificar si hay una nueva versión
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('🔄 Nueva versión del Service Worker encontrada');
+                
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('📱 Nueva versión lista. Recarga para actualizar.');
+                    // Puedes mostrar un botón para actualizar
+                    showUpdateNotification();
+                  }
+                });
+              });
+              
+              // Ocultar loading screen
+              hideLoadingScreen();
             })
             .catch(function(error) {
               console.log('❌ Error registrando Service Worker:', error);
-              
-              // Ocultar loading screen incluso si falla el SW
-              setTimeout(() => {
-                const loading = document.getElementById('pwa-loading');
-                if (loading) {
-                  loading.style.display = 'none';
-                }
-              }, 1000);
+              hideLoadingScreen();
             });
         });
+
+        // Verificar actualizaciones periódicamente
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('🔄 Controller changed - probable actualización');
+          window.location.reload();
+        });
       } else {
-        // Ocultar loading screen si no hay soporte para SW
+        hideLoadingScreen();
+      }
+
+      function hideLoadingScreen() {
         setTimeout(() => {
           const loading = document.getElementById('pwa-loading');
           if (loading) {
             loading.style.display = 'none';
           }
-        }, 1000);
+        }, 800);
+      }
+
+      function showUpdateNotification() {
+        // Implementar notificación de actualización si lo deseas
+        if (confirm('¡Nueva versión disponible! ¿Recargar para actualizar?')) {
+          window.location.reload();
+        }
       }
 
       // Detectar si la app se está ejecutando en modo standalone (PWA)
@@ -176,12 +195,46 @@
       function showInstallPromotion() {
         // Aquí puedes agregar un botón para instalar la PWA
         console.log('Mostrar promoción de instalación');
+        // Ejemplo: mostrar un banner de instalación
+        const installBanner = document.createElement('div');
+        installBanner.innerHTML = `
+          <div style="position: fixed; bottom: 0; left: 0; right: 0; background: #2563EB; color: white; padding: 10px; text-align: center; z-index: 10000;">
+            <p>¿Instalar la aplicación? <button onclick="installPWA()" style="background: white; color: #2563EB; border: none; padding: 5px 10px; border-radius: 5px; margin-left: 10px;">Instalar</button></p>
+          </div>
+        `;
+        document.body.appendChild(installBanner);
+        
+        // Remover después de 10 segundos
+        setTimeout(() => {
+          if (installBanner.parentNode) {
+            installBanner.parentNode.removeChild(installBanner);
+          }
+        }, 10000);
       }
+
+      // Función global para instalar PWA
+      window.installPWA = function() {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('Usuario aceptó la instalación');
+            } else {
+              console.log('Usuario rechazó la instalación');
+            }
+            deferredPrompt = null;
+          });
+        }
+      };
 
       // Manejar el evento de instalación
       window.addEventListener('appinstalled', (evt) => {
         console.log('🎉 PWA instalada exitosamente');
         deferredPrompt = null;
+        
+        // Remover banner de instalación si existe
+        const banners = document.querySelectorAll('[style*="position: fixed; bottom: 0"]');
+        banners.forEach(banner => banner.remove());
       });
     </script>
     

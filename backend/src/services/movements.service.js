@@ -1,3 +1,4 @@
+// services/movements.service.js - VERSIÓN COMPLETA CORREGIDA
 import { db } from '../config/firebase.js';
 import { hoyISO, cleanUndefined } from '../utils/helpers.js';
 import { getItemById, updateItemQuantity, discardItem } from './items.service.js';
@@ -5,33 +6,64 @@ import { getItemById, updateItemQuantity, discardItem } from './items.service.js
 const COLLECTION = 'movements';
 
 /**
- * Crear nuevo movimiento y actualizar stock del item
+ * Crear nuevo movimiento y actualizar stock del item - VERSIÓN CORREGIDA
  */
 export async function createMovement(data, userId) {
   try {
     const { itemId, tipo, cantidad, responsable, nota } = data;
 
+    // Validaciones
+    if (!itemId) throw new Error('ID del item requerido');
+    
+    const cantidadNum = Number(cantidad);
+    if (isNaN(cantidadNum) || cantidadNum <= 0) {
+      throw new Error('Cantidad debe ser un número positivo');
+    }
+
     // Obtener item actual
     const item = await getItemById(itemId);
-
     if (!item) {
       throw new Error('Item no encontrado');
     }
 
-    // Validar stock para salidas
-    if (tipo === 'salida' && item.cantidad < cantidad) {
-      throw new Error('Stock insuficiente para realizar la salida');
+    if (item.descartado) {
+      throw new Error('No se pueden hacer movimientos en items descartados');
     }
+
+    // Validar stock para salidas
+    if (tipo === 'salida' && item.cantidad < cantidadNum) {
+      throw new Error(`Stock insuficiente. Disponible: ${item.cantidad}, Solicitado: ${cantidadNum}`);
+    }
+
+    // Calcular nueva cantidad
+    let nuevaCantidad = item.cantidad;
+    switch (tipo) {
+      case 'entrada':
+        nuevaCantidad = item.cantidad + cantidadNum;
+        break;
+      case 'salida':
+        nuevaCantidad = Math.max(0, item.cantidad - cantidadNum);
+        break;
+      case 'descarte':
+        nuevaCantidad = 0;
+        break;
+      default:
+        throw new Error('Tipo de movimiento inválido');
+    }
+
+    console.log(`🔢 Cálculo de stock: ${item.cantidad} ${tipo === 'entrada' ? '+' : '-'} ${cantidadNum} = ${nuevaCantidad}`);
 
     // Crear el movimiento
     const movementData = {
       itemId,
       itemNombre: item.nombre,
       tipo,
-      cantidad: Number(cantidad),
+      cantidad: cantidadNum,
       responsable: responsable || '—',
       fecha: hoyISO(),
       nota: nota || '',
+      stockAnterior: item.cantidad,
+      stockNuevo: nuevaCantidad,
       createdAt: new Date(),
       createdBy: userId,
     };
@@ -39,34 +71,23 @@ export async function createMovement(data, userId) {
     const docRef = await db.collection(COLLECTION).add(cleanUndefined(movementData));
 
     // Actualizar cantidad del item según el tipo de movimiento
-    let newQuantity = item.cantidad;
-
     switch (tipo) {
       case 'entrada':
-        newQuantity = item.cantidad + cantidad;
-        await updateItemQuantity(itemId, newQuantity, responsable);
-        break;
-
       case 'salida':
-        newQuantity = Math.max(0, item.cantidad - cantidad);
-        await updateItemQuantity(itemId, newQuantity, responsable);
+        await updateItemQuantity(itemId, nuevaCantidad, responsable);
         break;
-
       case 'descarte':
         await discardItem(itemId, responsable);
-        newQuantity = 0;
         break;
-
-      default:
-        throw new Error('Tipo de movimiento inválido');
     }
 
     return {
       id: docRef.id,
       ...movementData,
-      stockActual: newQuantity,
+      stockActual: nuevaCantidad,
     };
   } catch (error) {
+    console.error('❌ Error en createMovement:', error);
     throw error;
   }
 }
