@@ -3,18 +3,13 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 
-// Importar rutas
+// Importar rutas (actualizadas con ./src/)
 import authRoutes from "./src/routes/auth.routes.js";
 import itemsRoutes from "./src/routes/items.routes.js";
 import movementsRoutes from "./src/routes/movements.routes.js";
-import { errorHandler, notFoundHandler } from "./src/middleware/errorHandler.js";
-import { auth } from "./src/config/firebase.js";
 
-// Importar middlewares
-import {
-  errorHandler,
-  notFoundHandler,
-} from "./src/middleware/errorHandler.js";
+// Importar middlewares (actualizadas con ./src/)
+import { errorHandler, notFoundHandler } from "./src/middleware/errorHandler.js";
 import { auth } from "./src/config/firebase.js";
 
 // Cargar variables de entorno
@@ -31,25 +26,20 @@ const app = express();
 app.use(helmet());
 
 // CORS - Configuración para producción
-// En la sección CORS, reemplaza con:
 app.use(
   cors({
     origin: function (origin, callback) {
       const allowedOrigins = [
         "http://localhost:5173",
-        "http://localhost:3000",
-        "https://tu-frontend.netlify.app", // Lo actualizarás después
-        process.env.FRONTEND_URL,
+        "http://localhost:3000", 
+        "https://tu-frontend.netlify.app",
+        process.env.FRONTEND_URL
       ].filter(Boolean);
 
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        process.env.NODE_ENV === "development"
-      ) {
+      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
         callback(null, true);
       } else {
-        callback(new Error("No permitido por CORS"));
+        callback(new Error('No permitido por CORS'));
       }
     },
     credentials: true,
@@ -57,8 +47,8 @@ app.use(
 );
 
 // Parser de JSON
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Logger simple de requests
 app.use((req, res, next) => {
@@ -70,43 +60,16 @@ app.use((req, res, next) => {
 // Rutas
 // ======================
 
-// Health check mejorado
+// Health check
 app.get("/health", (req, res) => {
   res.json({
     success: true,
     message: "🚀 API funcionando correctamente",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
-    version: "1.0.0",
+    version: "1.0.0"
   });
 });
-
-// Test de Firebase (solo en desarrollo)
-if (process.env.NODE_ENV !== "production") {
-  app.get("/api/test-firebase", async (req, res) => {
-    try {
-      console.log("🧪 Probando Firebase Admin SDK...");
-
-      // Solo probar listar usuarios en producción, no crear/eliminar
-      const users = await auth.listUsers(1);
-
-      res.json({
-        success: true,
-        message: "Firebase Admin SDK funciona correctamente",
-        usersCount: users.users.length,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("❌ Error Firebase Admin:", error);
-      res.status(500).json({
-        success: false,
-        message: "Error con Firebase Admin SDK",
-        error: error.message,
-        code: error.code,
-      });
-    }
-  });
-}
 
 // Debug token endpoint
 app.post("/api/debug-token", async (req, res) => {
