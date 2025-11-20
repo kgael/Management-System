@@ -89,12 +89,16 @@ export async function getItems() {
   }
 }
 
+// En utils/dataProvider.js, modifica createItem
 export async function createItem(itemData) {
   try {
+    console.log("📤 Enviando datos al backend:", itemData);
     const result = await apiClient('/items', {
       method: 'POST',
       body: itemData,
     });
+    
+    console.log("📥 Respuesta del backend:", result);
     
     // Guardar backup local
     saveLocalBackup();
